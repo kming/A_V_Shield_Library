@@ -8,6 +8,7 @@
 
 #import Adafruit_BBIO.ADC as ADC
 import generic as generic
+from collections import deque
 import Adafruit_BBIO.SPI as SPI
 import Adafruit_BBIO.PWM as PWM
 import Adafruit_BBIO.GPIO as GPIO
@@ -74,28 +75,34 @@ class adc:
 		print "Reading Audio Data"
 		# Write to output file until user input
 		while (not GPIO.event_detected(pin)):		# Stop if released
-			addr["{0}".format(i)] = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+			addr["{0}".format(i)] = [0]
 			for value in self._adc.xfer(addr[str(i)]):
-				self._data_file.write (chr(value))
+				self._data_file.write ("{0}\n".format(value))
 			i = i+1
 		
 		# Cleanup GPIO and file handling
 		self._data_file.close()
 		GPIO.cleanup()
 		
-	def event_detect(self, pin = "P8_14"):
+	def event_detect_works(self, pin = "P8_14"):
 		# Setup input control pin if it wasn't setup before
 		if (not (pin in self._pin_setup) or (self._pin_setup[pin] is False)):
 			GPIO.setup(pin, GPIO.IN)
 			self._pin_setup[pin] = True
 		print "Sampling Ambient Noise Levels"
+		temp_addr = [0]
 		ambient_addr = {}
-		value = self._adc.xfer([0])
-		for i in range(1000):
-			addr["{0}".format(i)] = [0]
-			value = (value + self._adc.xfer(addr[str(i)])[0]) / 2
+		value = self._adc.xfer(temp_addr)[0]
+		print value
+		for i in range(10000):
+			ambient_addr["{0}".format(i)] = [0]
+			value = value + self._adc.xfer(ambient_addr[str(i)])[0]
+		value = value/10000
 		print "Ambient Noise: %f" % value
-		
+		variance_values = []
+		for i in range(50):
+			variance_values.append(0)
+
 		print "Press and hold record button to start edge detect"
 		GPIO.wait_for_edge(pin, GPIO.RISING)		# wait for button press
 		
@@ -107,12 +114,23 @@ class adc:
 		i = 0
 		status = 0
 		addr = {}
-		# Write to output file until user input
+	
+		# Initiate Event Detection
 		while (not GPIO.event_detected(pin)):		# Stop if released
 			addr["{0}".format(i)] = [0]
-			if ((self._adc.xfer(addr[str(i)])[0] - value)/value > 0.1):
+			new_adc_value = self._adc.xfer(addr[str(i)])[0]
+			new_variance = abs(new_adc_value - value)
+			variance_values.append(new_variance)
+			variance_values.pop(0)
+			total_variance_value = 0
+			for variance_value in variance_values:
+				total_variance_value = total_variance_value + variance_value
+			avg_variance = total_variance_value / float(len(variance_values))
+			print avg_variance
+			if (avg_variance > 30):
+				print "Average Variance:"
 				status = 1
-				break
+			
 			i = i+1
 		
 		if status: 
@@ -122,7 +140,74 @@ class adc:
 			
 		# Cleanup GPIO 
 		GPIO.cleanup()
+			
+	def event_detect(self, pin = "P8_14"):
+		# Setup input control pin if it wasn't setup before
+		if (not (pin in self._pin_setup) or (self._pin_setup[pin] is False)):
+			GPIO.setup(pin, GPIO.IN)
+			self._pin_setup[pin] = True
+		print "Sampling Ambient Noise Levels"
+		temp_addr = [0]
+		ambient_addr = {}
+		value = self._adc.xfer(temp_addr)[0]
+		print value
+		for i in range(10000):
+			ambient_addr["{0}".format(i)] = [0]
+			value = value + self._adc.xfer(ambient_addr[str(i)])[0]
+		avg_noise = 128 
+		print "Ambient Noise: %f" % avg_noise
+		abs_diffs = []
+		for i in range(20):
+			abs_diffs.append(0)
+
+		print "Press and hold record button to start edge detect"
+		GPIO.wait_for_edge(pin, GPIO.RISING)		# wait for button press
 		
+		# Setup Loopback timer
+		GPIO.setup ("P8_15", GPIO.IN)
+		PWM.start ("P8_13", 50, 8000, 0)
+		# Setup output file
+		GPIO.add_event_detect(pin, GPIO.FALLING)
+		i = 0
+		status = 0
+		addr = {}
+		prev_avg_diff = 0 
+		count = 0
+		f = open ("abs_diff_base", "w")
+		# Initiate Event Detection
+		while (not GPIO.event_detected(pin)):		# Stop if released
+			addr["{0}".format(i)] = [0]
+			new_adc_value = self._adc.xfer(addr[str(i)])[0]
+			# calculate abs diff
+			diff = new_adc_value - avg_noise
+			new_abs_diff = abs(new_adc_value - avg_noise)
+			if (new_abs_diff > 110):
+				next
+			abs_diffs.append(new_abs_diff)
+			abs_diffs.pop(0)
+			total_diff = 0
+			for abs_diff in abs_diffs:
+				total_diff = total_diff + abs_diff
+			avg_diff = total_diff / 20.0
+			f.write("{0}\n".format(new_adc_value))
+			if (avg_diff > 30):
+				count = count + 1
+				if(count > 10):
+					status = 1
+			else: 
+				count = 0
+			
+			i = i+1
+	
+		f.close()
+		if status: 
+			print "Event Detected."
+		else:
+			print "Nothing Detected."
+			
+		# Cleanup GPIO 
+		GPIO.cleanup()
+
 		
 		
 		
