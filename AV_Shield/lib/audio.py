@@ -11,7 +11,7 @@ import generic as generic
 import Adafruit_BBIO.SPI as SPI
 import Adafruit_BBIO.PWM as PWM
 import Adafruit_BBIO.GPIO as GPIO
-
+import time as time
 # Constant Definition
 verbose = True
 
@@ -63,6 +63,9 @@ class adc:
 		print "Press and hold record button to record"
 		GPIO.wait_for_edge(pin, GPIO.RISING)		# wait for button press
 		
+		# Setup Loopback timer
+		GPIO.setup ("P8_15", GPIO.IN)
+		PWM.start ("P8_13", 50, 8000, 0)
 		# Setup output file
 		self._data_file = open("data.sample", "w") 
 		GPIO.add_event_detect(pin, GPIO.FALLING)
@@ -71,10 +74,10 @@ class adc:
 		print "Reading Audio Data"
 		# Write to output file until user input
 		while (not GPIO.event_detected(pin)):		# Stop if released
-			addr["{0}".format(i)] = [0]
-			self._data_file.write(str(self._adc.xfer(addr[str(i)])[0]))	
+			addr["{0}".format(i)] = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+			for value in self._adc.xfer(addr[str(i)]):
+				self._data_file.write (chr(value))
 			i = i+1
-			
 		
 		# Cleanup GPIO and file handling
 		self._data_file.close()
