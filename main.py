@@ -9,7 +9,7 @@ import random as random
 import AV_Shield.lib.audio as audio
 import AV_Shield.lib.audio_wav_file as wav
 
-spi = bbb_SPI()
+spi = audio.bbb_SPI()
 spi.setup_spi_protocol(3000000)
 spi.read_till_stop()
 # Debugging Output

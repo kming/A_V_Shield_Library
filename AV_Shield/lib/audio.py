@@ -13,14 +13,14 @@ import Adafruit_BBIO.PWM as PWM
 import Adafruit_BBIO.GPIO as GPIO
 
 # Constant Definition
-verbose = False
+verbose = True
 class bbb_SPI:
 	_adc = ""
 	_data_file = ""
 	_file_lock = False
 	_pin_setup = {}
 	def __init__ (self):
-		self._adc = SPI(0,0)		# Use SPI0 as the main protocol to communicate with the ADC
+		self._adc = SPI.SPI(0,0)		# Use SPI0 as the main protocol to communicate with the ADC
 		self._data_file = "" 		# Write to a temporary data file
 		self._file_lock = True
 		
@@ -39,21 +39,28 @@ class bbb_SPI:
 			print "loop\t{0}".format(self._adc.loop)
 			print "mode\t{0}".format(self._adc.mode)
 	
-	def read_till_stop(self, pin = "P8_14"):
+	def read_till_stop(self, pin = "P8_14", adc_clk_pin = "P9_14", adc_clk_freq = -1):
 		# Setup input control pin if it wasn't setup before
 		if (not (pin in self._pin_setup) or (self._pin_setup[pin] is False)):
 			GPIO.setup(pin, GPIO.IN)
 			self._pin_setup[pin] = True
+		print "Setting up ADC clock"
+		if (adc_clk_freq < 0):
+			adc_clk_freq = self._adc.msh
+		PWM.start(adc_clk_pin, 50, adc_clk_freq, 0) # clock signal to ADC with 0 polarity and 50%duty cycle
+		print "Press and hold record button to record"
+		GPIO.wait_for_edge("P8_14", GPIO.RISING)
 		
+
 		# Setup output file
 		self._data_file = open("data.sample", "w") 
-		GPIO.add_event_detect(pin, GPIO.RISING)
+		GPIO.add_event_detect(pin, GPIO.FALLING)
 		i = 0
 		addr = {}
-		
+		print "Reading Audio Data"
 		# Write to output file until user input
 		while (not GPIO.event_detected(pin)):
-		    addr["{0}".format(i)] = [0]
+			addr["{0}".format(i)] = [0]
 			self._data_file.write(str(self._adc.xfer(addr[str(i)])[0]))	
 			i = i+1
 			
