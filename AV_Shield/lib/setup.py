@@ -32,6 +32,7 @@ def setup(verbose=0):
 def general_setup(verbose=0):
 	# Setup generic information needed for the beaglebone black
 	return OK
+	
 def audio_setup(verbose=0):
 	# Setup Audio related pins and environment
 	return OK
