@@ -18,7 +18,7 @@ def status_check (function_name, status):
 		error_string =  "%s Errored with Error code %d" % (function_name, status)
 		raise RuntimeError(error_string)
 	return status
-def 
+ 
 
 #convert a value to signed from unsigned
 def convert_to_signed_int (value, reference):
