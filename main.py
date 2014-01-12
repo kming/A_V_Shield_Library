@@ -6,7 +6,7 @@
 ###############################################################
 import wave as wave
 import random as random
-import AV_Shield.lib.audio_wav_object as wav
+import AV_Shield.lib.audio_wav_file as wav
 # Debugging Output
 print "Testing Audio WAV objects..."
 
@@ -56,12 +56,19 @@ size = new_chunk.get_data_size()
 assert (size == 5)
 assert ((new_chunk.get_total_size()-size) == 8)
 
-new_wav = wav.wav_object()
+new_wav = wav.wav()
 for i in range (0, 10000):
 	new_wav.append_data_value (chr(int(random.random()*256)))
 
-new_wav.export_to_file("/home/kming/Desktop/A_V_Shield_Library/test.wav")
-new_wav.import_from_file("/home/kming/Desktop/A_V_Shield_Library/test.wav")
+#new_wav.export_to_file("/home/kming/Desktop/A_V_Shield_Library/test.wav")
+new_wav_ulaw = wav.wav()
+new_wav_16 = wav.wav()
+new_wav_ulaw.import_from_file("/home/keiming/Desktop/Thesis/github/A_V_Shield_Library/M1F1-mulaw-8bit.wav")
+new_wav_16.import_from_file("/home/keiming/Desktop/Thesis/github/A_V_Shield_Library/M1F1-int16-16bit.wav")
+new_wav_ulaw.export_to_file("/home/keiming/Desktop/Thesis/github/A_V_Shield_Library/M1F1-mulaw-8bit_ex.wav")
+new_wav_16.export_to_file("/home/keiming/Desktop/Thesis/github/A_V_Shield_Library/M1F1-int16-16bit_ex.wav")
+print new_wav_16._print_fmt_debug_info()
+print new_wav_ulaw._print_fmt_debug_info()
 #read_wav = wave.open("/home/kming/Desktop/A_V_Shield_Library/test.wav",'r')
 #params = read_wav.getparams()
 #print params

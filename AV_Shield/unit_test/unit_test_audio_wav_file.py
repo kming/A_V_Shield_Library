@@ -17,7 +17,6 @@ def main():
 	data = new_chunk.data_to_string()
 	assert (data == "1kak")
 
-
 	print "   - Testing append_list"
 	new_chunk.clear_data()
 

@@ -3,7 +3,7 @@ import os
 import glob
 import subprocess
 
-list_of_tests = ["audio_wav_object", "generic", "setup"]
+list_of_tests = ["audio_wav_file", "generic", "setup"]
 
 SUCCESSFUL = 0
 FAIL = 1
