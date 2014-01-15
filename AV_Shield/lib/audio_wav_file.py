@@ -9,7 +9,7 @@
 ###### IMPORT LIBRARIES ######
 import array as ArrayType
 import generic as generic
-
+import audio_encoding as encoding
 ###### CLASS DEFINITIONS ######
 # Chunk Class:
 #       RIFF File Type Chunk, Composed of the following parts
@@ -192,7 +192,7 @@ class wav:
 		# if two channels, then we will expect two value for left and right
 		if (self._w_fmt_value[1] == 2):	
 			self.w_data.append_value(a_data[1], a_size, a_big_endian)
-		self.w_data.append_value(a_data[0], a_size, a_big_endian) 
+		self.w_data.append_value(a_data, a_size, a_big_endian) 
 
 	# Clearing Sonic Data
 	def clear_data (self):
@@ -203,8 +203,25 @@ class wav:
 		print " - Value(Chunk)"
 		print self.w_data.data_to_list()
 		print " - Chunk Data Size"
-		print self.w_data.get_data_size()	
+		print self.w_data.get_data_size()
 	
+	# Export to a WAV file 
+	def export_data_to_list (self, a_size=0):
+		output_list = []		
+		# Calculate data value size
+		if a_size == 0:		
+			a_size = (self._w_fmt_value[5] / 8) 		# Assumes default value byte size from fmt unless specified
+		
+		# Grab Data String
+		data_string = self.w_data.data_to_string()
+
+		# Assumes aligned data
+		limit = self.w_data.get_data_size()/a_size		
+		for i in range(limit):
+			temp_string = data_string[(i*a_size):(i*a_size+a_size)] # input string to conversion
+			output_list.append(self._raw_to_value(temp_string,a_size))
+		return output_list
+
 	# Export to a WAV file 
 	def export_to_file (self, full_file_path):
 		# Ensure fmt chunk is updated	
@@ -244,7 +261,8 @@ class wav:
 		
 		# Separate different chunk information (Header, Format, Data)
 		(header_string, fmt_data_string) = file_string.split("fmt ", 1)
-		(fmt_string, data_string) = fmt_data_string.split("data", 1)		
+		(fmt_string, data_extra_string) = fmt_data_string.split("data", 1)	
+		(data_string, extra_string) = fmt_data_string.split("date", 1)		
 		# Ensure it is a RIFF WAVE File 		
 		if "WAVE" not in header_string:
 			print " - NOT a WAV File Format"
@@ -281,5 +299,32 @@ class wav:
 			return_value += char_value
 		return return_value
 			
+	def compress_mu_law (self):
+		# Set encoding type as mu_law
+		encode = encoding.mu_law()
+	
+		# Calculate data value size	
+		size = (self._w_fmt_value[5] / 8) 		# Assumes default value byte size from fmt unless specified
+		
+		# Grab Data String and clear data string
+		data_string = self.w_data.data_to_string()
+		self.w_data.clear_data()
+		
+		# Assumes aligned data
+		limit = self.w_data.get_data_size()/size		
+		for i in range(limit):
+			raw_value = self._raw_to_value(data_string[(i*size):((i+1)*size)],size) # input string to conversion
+			## Custom mu Law Function Not Working			
+			#print raw_value	
+			#encoded_value = encode.encode_value(raw_value, self._w_fmt_value[5], False, 32768)	
+			#print encoded_value	
+			#self.w_data.append_value(chr(encoded_value))
+			
+			# Audioop mu law library call, may not be supported on BBB			
+			encoded_value = encode.encode_value_library(data_string[(i*size):((i+1)*size)], size)					
+			self.w_data.append_value(encoded_value)
+		self.change_basic_fmt (7, self._w_fmt_value[1], self._w_fmt_value [2], 8)
+		
+
 		
 		
