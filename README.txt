@@ -12,4 +12,3 @@ Main Program Execution
    - stores main program to be executed with the library functions. 
  - run_test.py
    - testing code which initiates unit tests for code
-WAHID WANTS ME TO DO THIS
