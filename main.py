@@ -9,10 +9,16 @@ import random as random
 import AV_Shield.lib.audio as audio
 import AV_Shield.lib.audio_wav_file as wav
 
+recording = wav.wav()
+recording.change_basic_fmt (1, 1, 8000, 8)
+
 adc = audio.adc()
-adc.setup_spi_protocol(3000000)
-adc.setup_adc_clock()
+adc.setup_spi_protocol(375000)
+adc.setup_adc_clock("P9_14", 288000)
 adc.read_till_stop()
+
+return
+
 # Debugging Output
 print "Testing Audio WAV objects..."
 
