@@ -83,6 +83,46 @@ class adc:
 		self._data_file.close()
 		GPIO.cleanup()
 		
+	def event_detect(self, pin = "P8_14"):
+		# Setup input control pin if it wasn't setup before
+		if (not (pin in self._pin_setup) or (self._pin_setup[pin] is False)):
+			GPIO.setup(pin, GPIO.IN)
+			self._pin_setup[pin] = True
+		print "Sampling Ambient Noise Levels"
+		ambient_addr = {}
+		value = self._adc.xfer([0])
+		for i in range(1000):
+			addr["{0}".format(i)] = [0]
+			value = (value + self._adc.xfer(addr[str(i)])[0]) / 2
+		print "Ambient Noise: %f" % value
+		
+		print "Press and hold record button to start edge detect"
+		GPIO.wait_for_edge(pin, GPIO.RISING)		# wait for button press
+		
+		# Setup Loopback timer
+		GPIO.setup ("P8_15", GPIO.IN)
+		PWM.start ("P8_13", 50, 8000, 0)
+		# Setup output file
+		GPIO.add_event_detect(pin, GPIO.FALLING)
+		i = 0
+		status = 0
+		addr = {}
+		# Write to output file until user input
+		while (not GPIO.event_detected(pin)):		# Stop if released
+			addr["{0}".format(i)] = [0]
+			if ((self._adc.xfer(addr[str(i)])[0] - value)/value > 0.1):
+				status = 1
+				break
+			i = i+1
+		
+		if status: 
+			print "Event Detected."
+		else:
+			print "Nothing Detected."
+			
+		# Cleanup GPIO 
+		GPIO.cleanup()
+		
 		
 		
 		

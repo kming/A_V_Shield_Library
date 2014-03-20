@@ -16,7 +16,7 @@ recording.change_basic_fmt (1, 1, 44100, 8)
 adc = audio.adc()
 adc.setup_spi_protocol(1500000)
 adc.setup_adc_clock("P9_14", 1500000)
-adc.read_till_stop()
+adc.event_detect()
 
 f = open ("data.sample", "r")
 input = f.read()
