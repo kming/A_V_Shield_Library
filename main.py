@@ -6,17 +6,17 @@
 ###############################################################
 import wave as wave
 import random as random
-import AV_Shield.lib.audio as audio
+import AV_Shield.lib.bbb_adc_spi as bbb_adc_spi
 import AV_Shield.lib.audio_wav_file as wav
 import time as time
 
 recording = wav.wav()
 recording.change_basic_fmt (1, 1, 44100, 8)
 
-adc = audio.adc()
+adc = bbb_adc_spi.adc_spi()
 adc.setup_spi_protocol(1500000)
 adc.setup_adc_clock("P9_14", 1500000)
-adc.event_detect()
+adc.event_detect_one_input_var()
 
 f = open ("data.sample", "r")
 input = f.read()
